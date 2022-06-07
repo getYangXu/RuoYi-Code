@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.study.mapper.StudyItemMapper">
+    
+    <resultMap type="StudyItem" id="StudyItemResult">
+    	<id     property="itemId"        column="item_id"      />
+        <result property="itemName"      column="item_name"    />
+        <result property="itemExpense"   column="item_expense"     />
+        <result property="itemType"      column="item_type"   />
+        <result property="remark"        column="remark"    />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"      column="update_by"      />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+    
+    <sql id="selectItemVo">
+        select item_id, item_name, item_expense, item_type, remark, create_by, create_time, update_by, update_time
+		from study_item
+    </sql>
+    
+    <!-- 查询条件 -->
+	<sql id="sqlwhereSearch">
+		<where>
+			<if test="itemId !=null">
+				and item_id = #{itemId}
+			</if>
+			<if test="itemName !=null and itemName != ''">
+				and item_name = #{itemName}
+			</if>
+            <if test="itemExpense !=null and itemExpense != ''">
+                and item_expense = #{itemExpense}
+            </if>
+            <if test="itemType !=null and itemType != ''">
+                and item_type = #{itemType}
+            </if>
+		</where>
+	</sql>
+    
+    <select id="selectItem" parameterType="StudyItem" resultMap="StudyItemResult">
+        <include refid="selectItemVo"/>
+        <include refid="sqlwhereSearch"/>
+    </select>
+    
+    <select id="selectItemList" parameterType="StudyItem" resultMap="StudyItemResult">
+        <include refid="selectItemVo"/>
+        <where>
+            <if test="itemName !=null and itemName != ''">
+                and item_name = #{itemName}
+            </if>
+            <if test="itemExpense !=null and itemExpense != ''">
+                and item_expense = #{itemExpense}
+            </if>
+            <if test="itemType !=null and itemType != ''">
+                and item_type = #{itemType}
+            </if>
+			<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+				and date_format(create_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+			</if>
+			<if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+				and date_format(create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+			</if>
+		</where>
+    </select>
+    
+    <insert id="insertItem" parameterType="StudyItem">
+        insert into study_item (
+			<if test="itemName != null and itemName != '' ">item_name,</if>
+			<if test="itemExpense != null and itemExpense != '' ">item_expense,</if>
+			<if test="itemType != null and itemType != '' ">item_type,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			<if test="remark != null and remark != ''">remark,</if>
+ 			create_time
+        )values(
+			<if test="itemName != null and itemName != ''">#{itemName},</if>
+			<if test="itemExpense != null and itemExpense != ''">#{itemExpense},</if>
+			<if test="itemType != null and itemType != ''">#{itemType},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			<if test="remark != null and remark != ''">#{remark},</if>
+ 			sysdate()
+		)
+    </insert>
+	 
+    <update id="updateItem" parameterType="StudyItem">
+        update study_item
+        <set>
+            <if test="itemName != null and itemName != ''">item_name = #{itemName},</if>
+            <if test="itemExpense != null and itemExpense != ''">item_expense = #{itemExpense},</if>
+            <if test="itemType != null and itemType != ''">item_type = #{itemType},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+ 			update_time = sysdate()
+        </set>
+        where item_id = #{itemId}
+    </update>
+	
+    <delete id="deleteItemById" parameterType="Long">
+        delete from study_item where item_id = #{itemId}
+    </delete>
+    
+    <delete id="deleteItemByIds" parameterType="Long">
+        delete from study_item where item_id in
+        <foreach item="itemId" collection="itemIds" open="(" separator="," close=")">
+        	#{itemId}
+        </foreach>
+    </delete>
+    
+</mapper>

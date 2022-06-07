@@ -17,10 +17,10 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="项目类别" prop="status">
-        <el-select v-model="queryParams.status" placeholder="项目类别" clearable>
+      <el-form-item label="项目类别" prop="itemType">
+        <el-select v-model="queryParams.itemType" placeholder="项目类别" clearable>
           <el-option
-            v-for="dict in dict.type.sys_normal_disable"
+            v-for="dict in dict.type.sys_item_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -52,7 +52,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['free:post:add']"
+          v-hasPermi="['study:item:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -63,7 +63,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['free:post:edit']"
+          v-hasPermi="['study:item:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -74,7 +74,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['free:post:remove']"
+          v-hasPermi="['study:item:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -84,19 +84,19 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['free:post:export']"
+          v-hasPermi="['study:item:export']"
         >导出</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="postList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="itemList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="项目名称" align="center" prop="itemName" />
       <el-table-column label="项目费用" align="center" prop="itemExpense" />
       <el-table-column label="项目类别" align="center" prop="itemType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.sys_normal_disable" :value="scope.row.itemType"/>
+          <dict-tag :options="dict.type.sys_item_type" :value="scope.row.itemType"/>
         </template>
       </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
@@ -112,14 +112,14 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['free:post:edit']"
+            v-hasPermi="['study:item:edit']"
           >修改</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['free:post:remove']"
+            v-hasPermi="['study:item:remove']"
           >删除</el-button>
         </template>
       </el-table-column>
@@ -137,19 +137,20 @@
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="项目名称" prop="itemName">
-          <el-input v-model="form.postName" placeholder="请输入项目名称" />
+          <el-input v-model="form.itemName" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="项目费用" prop="itemExpense">
-          <el-input v-model="form.postCode" placeholder="请输入项目费用" />
+          <el-input v-model="form.itemExpense" placeholder="请输入项目费用" />
         </el-form-item>
         <el-form-item label="项目类别" prop="itemType">
-          <el-radio-group v-model="form.status">
-            <el-radio
-              v-for="dict in dict.type.sys_normal_disable"
+          <el-select v-model="form.itemType" placeholder="请选择项目类别">
+            <el-option
+              v-for="dict in dict.type.sys_item_type"
               :key="dict.value"
-              :label="dict.value"
-            >{{dict.label}}</el-radio>
-          </el-radio-group>
+              :label="dict.label"
+              :value="dict.value"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
@@ -164,11 +165,11 @@
 </template>
 
 <script>
-import { listPost, getPost, delPost, addPost, updatePost } from "@/api/system/post";
+import { listItem, getItem, delItem, addItem, updateItem } from "@/api/study/item";
 
 export default {
-  name: "Post",
-  dicts: ['sys_normal_disable'],
+  name: "Item",
+  dicts: ['sys_item_type'],
   data() {
     return {
       // 遮罩层
@@ -184,7 +185,9 @@ export default {
       // 总条数
       total: 0,
       // 岗位表格数据
-      postList: [],
+      itemList: [],
+      // 日期范围
+      dateRange: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -193,23 +196,23 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        postCode: undefined,
-        postName: undefined,
-        status: undefined
+        itemName: undefined,
+        itemExpense: undefined,
+        itemType: undefined
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
-        postName: [
-          { required: true, message: "岗位名称不能为空", trigger: "blur" }
+        itemName: [
+          { required: true, message: "项目名称不能为空", trigger: "blur" }
         ],
-        postCode: [
-          { required: true, message: "岗位编码不能为空", trigger: "blur" }
+        itemExpense: [
+          { required: true, message: "项目费用不能为空", trigger: "blur" }
         ],
-        postSort: [
-          { required: true, message: "岗位顺序不能为空", trigger: "blur" }
-        ]
+        // itemType: [
+        //   { required: true, message: "岗位顺序不能为空", trigger: "blur" }
+        // ]
       }
     };
   },
@@ -220,8 +223,8 @@ export default {
     /** 查询岗位列表 */
     getList() {
       this.loading = true;
-      listPost(this.queryParams).then(response => {
-        this.postList = response.rows;
+      listItem(this.addDateRange(this.queryParams, this.dateRange)).then(response => {
+        this.itemList = response.rows;
         this.total = response.total;
         this.loading = false;
       });
@@ -234,11 +237,12 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        postId: undefined,
-        postCode: undefined,
-        postName: undefined,
-        postSort: 0,
-        status: "0",
+        itemId: undefined,
+        itemName: undefined,
+        itemExpense: undefined,
+        itemType: undefined,
+        // postSort: 0,
+        // status: "0",
         remark: undefined
       };
       this.resetForm("form");
@@ -255,7 +259,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.postId)
+      this.ids = selection.map(item => item.itemId)
       this.single = selection.length!=1
       this.multiple = !selection.length
     },
@@ -263,30 +267,30 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加岗位";
+      this.title = "添加项目";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const postId = row.postId || this.ids
-      getPost(postId).then(response => {
+      const itemId = row.itemId || this.ids
+      getItem(itemId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改岗位";
+        this.title = "修改项目";
       });
     },
     /** 提交按钮 */
     submitForm: function() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.postId != undefined) {
-            updatePost(this.form).then(response => {
+          if (this.form.itemId != undefined) {
+            updateItem(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addPost(this.form).then(response => {
+            addItem(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
@@ -297,9 +301,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const postIds = row.postId || this.ids;
-      this.$modal.confirm('是否确认删除岗位编号为"' + postIds + '"的数据项？').then(function() {
-        return delPost(postIds);
+      const itemIds = row.itemId || this.ids;
+      this.$modal.confirm('是否确认删除项目编号为"' + itemIds + '"的数据项？').then(function() {
+        return delItem(itemIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
@@ -307,7 +311,7 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('system/post/export', {
+      this.download('study/item/export', {
         ...this.queryParams
       }, `post_${new Date().getTime()}.xlsx`)
     }
