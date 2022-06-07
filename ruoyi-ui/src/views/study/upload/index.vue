@@ -125,11 +125,32 @@
           <el-input v-model="form.uploadName" placeholder="请输入文件名称" />
         </el-form-item>
         <el-form-item label="文件信息" prop="uploadInfo">
-          <el-input v-model="form.uploadInfo" placeholder="请输入文件信息" />
+          <el-input v-model="form.uploadInfo" type="textarea" placeholder="请输入文件信息" />
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" placeholder="请输入内容" />
         </el-form-item>
+        <el-upload
+          :limit="2"
+          accept=".xlsx, .xls, .js"
+          :headers="upload.headers"
+          :action="upload.url + '?updateSupport=' + upload.updateSupport"
+          :disabled="upload.isUploading"
+          :on-progress="handleFileUploadProgress"
+          :on-success="handleFileSuccess"
+          :auto-upload="false"
+          drag
+        >
+          <i class="el-icon-upload"></i>
+          <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+          <div class="el-upload__tip text-center" slot="tip">
+            <div class="el-upload__tip" slot="tip">
+              <el-checkbox v-model="upload.updateSupport" /> 是否更新已经存在的用户数据
+            </div>
+            <span>仅允许导入xls、xlsx、js格式文件。</span>
+            <el-link type="primary" :underline="false" style="font-size:12px;vertical-align: baseline;" @click="importTemplate">下载模板</el-link>
+          </div>
+        </el-upload>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -141,6 +162,7 @@
 
 <script>
 import { listUpload, getUpload, delUpload, addUpload, updateUpload } from "@/api/study/upload";
+import {getToken} from "@/utils/auth";
 
 export default {
   name: "Upload",
@@ -174,15 +196,27 @@ export default {
         uploadName: undefined,
         uploadInfo: undefined
       },
+      // 用户导入参数
+      upload: {
+        // 是否显示弹出层（用户导入）
+        open: false,
+        // 弹出层标题（用户导入）
+        title: "",
+        // 是否禁用上传
+        isUploading: false,
+        // 是否更新已经存在的用户数据
+        updateSupport: 0,
+        // 设置上传的请求头部
+        headers: { Authorization: "Bearer " + getToken() },
+        // 上传的地址
+        url: process.env.VUE_APP_BASE_API + "/system/user/importData"
+      },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
         uploadName: [
           { required: true, message: "文件名称不能为空", trigger: "blur" }
-        ],
-        uploadInfo: [
-          { required: true, message: "文件费用不能为空", trigger: "blur" }
         ],
         // uploadType: [
         //   { required: true, message: "岗位顺序不能为空", trigger: "blur" }
@@ -291,3 +325,13 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+.el-upload {
+ display: flex;
+}
+.el-upload-dragger{
+  margin: auto;
+}
+
+</style>

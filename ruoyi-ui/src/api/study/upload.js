@@ -1,5 +1,7 @@
 import request from '@/utils/request'
 
+
+
 // 查询信息列表
 export function listUpload(query) {
   return request({
@@ -42,3 +44,4 @@ export function delUpload(uploadId) {
     method: 'delete'
   })
 }
+
