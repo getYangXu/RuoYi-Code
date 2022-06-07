@@ -313,7 +313,7 @@ export default {
     handleExport() {
       this.download('study/item/export', {
         ...this.queryParams
-      }, `post_${new Date().getTime()}.xlsx`)
+      }, `item_${new Date().getTime()}.xlsx`)
     }
   }
 };

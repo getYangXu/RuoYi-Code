@@ -31,7 +31,8 @@ public class StudyItem extends BaseEntity
     private String itemExpense;
 
     /** 项目类型 */
-    @Excel(name = "项目类型")
+    @Excel(name = "项目类型",readConverterExp = "1=食物,2=衣服," +
+            "3=家庭设备和维修服务,4=医疗,5=交通,6=娱乐,7=通讯,8=教育,9=住房以及其他商品和服务,10=家用")
     private String itemType;
 
     public Long getItemId() {

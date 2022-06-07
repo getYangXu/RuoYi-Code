@@ -47,7 +47,7 @@ public class StudyItemController extends BaseController
     {
         List<StudyItem> list = itemService.selectItemList(item);
         ExcelUtil<StudyItem> util = new ExcelUtil<StudyItem>(StudyItem.class);
-        util.exportExcel(response, list, "参数数据");
+        util.exportExcel(response, list, "项目信息");
     }
 
     /**
