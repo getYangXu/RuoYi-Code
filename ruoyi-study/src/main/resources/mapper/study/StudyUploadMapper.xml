@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.study.mapper.StudyUploadMapper">
+    
+    <resultMap type="StudyUpload" id="StudyUploadResult">
+    	<id     property="uploadId"        column="upload_id"      />
+        <result property="uploadName"      column="upload_name"    />
+        <result property="uploadInfo"   column="upload_info"     />
+        <result property="remark"        column="remark"    />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"      column="update_by"      />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+    
+    <sql id="selectUploadVo">
+        select upload_id, upload_name, upload_info, remark, create_by, create_time, update_by, update_time
+		from study_upload
+    </sql>
+    
+    <!-- 查询条件 -->
+	<sql id="sqlwhereSearch">
+		<where>
+			<if test="uploadId !=null">
+				and upload_id = #{uploadId}
+			</if>
+			<if test="uploadName !=null and uploadName != ''">
+				and upload_name = #{uploadName}
+			</if>
+            <if test="uploadInfo !=null and uploadInfo != ''">
+                and upload_info = #{uploadInfo}
+            </if>
+		</where>
+	</sql>
+    
+    <select id="selectUpload" parameterType="StudyUpload" resultMap="StudyUploadResult">
+        <include refid="selectUploadVo"/>
+        <include refid="sqlwhereSearch"/>
+    </select>
+    
+    <select id="selectUploadList" parameterType="StudyUpload" resultMap="StudyUploadResult">
+        <include refid="selectUploadVo"/>
+        <where>
+            <if test="uploadName !=null and uploadName != ''">
+                and upload_name = #{uploadName}
+            </if>
+            <if test="uploadInfo !=null and uploadInfo != ''">
+                and upload_info = #{uploadInfo}
+            </if>
+			<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+				and date_format(create_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+			</if>
+			<if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+				and date_format(create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+			</if>
+		</where>
+    </select>
+    
+    <insert id="insertUpload" parameterType="StudyUpload">
+        insert into study_upload (
+			<if test="uploadName != null and uploadName != '' ">upload_name,</if>
+			<if test="uploadInfo != null and uploadInfo != '' ">upload_info,</if>
+			<if test="createBy != null and createBy != ''">create_by,</if>
+			<if test="remark != null and remark != ''">remark,</if>
+ 			create_time
+        )values(
+			<if test="uploadName != null and uploadName != ''">#{uploadName},</if>
+			<if test="uploadInfo != null and uploadInfo != ''">#{uploadInfo},</if>
+			<if test="createBy != null and createBy != ''">#{createBy},</if>
+			<if test="remark != null and remark != ''">#{remark},</if>
+ 			sysdate()
+		)
+    </insert>
+	 
+    <update id="updateUpload" parameterType="StudyUpload">
+        update study_upload
+        <set>
+            <if test="uploadName != null and uploadName != ''">upload_name = #{uploadName},</if>
+            <if test="uploadInfo != null and uploadInfo != ''">upload_info = #{uploadInfo},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+ 			update_time = sysdate()
+        </set>
+        where upload_id = #{uploadId}
+    </update>
+	
+    <delete id="deleteUploadById" parameterType="Long">
+        delete from study_upload where upload_id = #{uploadId}
+    </delete>
+    
+    <delete id="deleteUploadByIds" parameterType="Long">
+        delete from study_upload where upload_id in
+        <foreach item="uploadId" collection="uploadIds" open="(" separator="," close=")">
+        	#{uploadId}
+        </foreach>
+    </delete>
+    
+</mapper>
